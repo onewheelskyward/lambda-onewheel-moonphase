@@ -1,0 +1,28 @@
+{
+  "name": "lambda-onewheel-moonphase",
+  "version": "0.0.0",
+  "description": "A lambda interface to the Navy's moon data api.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/onewheelskyward/lambda-onewheel-moonphase.git"
+  },
+  "keywords": [
+    "moon",
+    "phase",
+    "node",
+    "lambda"
+  ],
+  "author": "Andrew Kreps",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/onewheelskyward/lambda-onewheel-moonphase/issues"
+  },
+  "homepage": "https://github.com/onewheelskyward/lambda-onewheel-moonphase#readme",
+  "dependencies": {
+    "superagent": "^2.3.0"
+  }
+}

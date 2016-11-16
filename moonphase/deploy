@@ -1,0 +1,8 @@
+#!/usr/local/bin/fish
+rm one.zip
+
+zip -r one.zip index.js node_modules package.json
+
+aws lambda update-function-code --region us-west-2 --profile aklambda --function-name moon --zip-file fileb://one.zip
+
+# aws lambda create-function --region us-west-2 --runtime nodejs4.3 --role arn:aws:iam::268578439486:role/service-role/slackGoogleRole --profile aklambda --function-name moon --handler index.handler --zip-file fileb://one.zip
