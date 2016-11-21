@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/onewheelskyward/lambda-onewheel-moonphase#readme",
   "dependencies": {
+    "iso8601": "^1.1.1",
     "superagent": "^2.3.0"
   }
 }

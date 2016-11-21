@@ -1,4 +1,5 @@
 var superagent = require('superagent');
+var iso8601 = require('iso8601');
 
 // http://api.usno.navy.mil/rstt/oneday?date=11/12/2016&coords=35.3030433,-106.4350902&tz=-7
 exports.handler = function (event, context) {
@@ -15,9 +16,12 @@ exports.handler = function (event, context) {
     var location = event.queryStringParameters.loc;
     var lat;
     var lng;
+    var address;
     var date = new Date();
     console.log(date);
     var dateStr = (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear();
+    var iso8601Prefix = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + "T";
+    var iso8601Suffix;
 
     console.log("Asking geocoder for information on " + location);
     superagent.get(geocoderUri + location)
@@ -26,13 +30,22 @@ exports.handler = function (event, context) {
             console.log("Getting timezone information");
             lat = res.body.lat;
             lng = res.body.lng;
+            address = res.body.address;
             superagent.get(timezoneUri + "lat=" + lat + "&lng=" + lng)
                 .end(function (err, res) {
-                    console.log("Timezone: " + res.body);
+                    var timezone = res.body;
+                    console.log("Timezone: " + timezone);
                     console.log("latLng: " + lat + " " + lng);
-                    superagent.get(moonUri + "date=" + dateStr + "&coords=" + lat + "," + lng + "&tz=" + res.body)
+                    iso8601Suffix = ":00" + timezone;
+                    moonUri += "date=" + dateStr + "&coords=" + lat + "," + lng + "&tz=" + timezone;
+                    console.log(moonUri);
+                    superagent.get(moonUri)
                         .end(function (err, res) {
                             console.log(res.body);
+                            //  Begin remapping of response object.
+                            // var d = Date.parse(res.body.month + '/' + res.body.day + '/' + res.body.year + ' ' + res.body.sundata[0].time);
+                            // console.log(iso8601.fromDate(d));
+
                             var response = {
                                 year: res.body.year,
                                 month: res.body.month,
@@ -40,29 +53,34 @@ exports.handler = function (event, context) {
                                 dayOfWeek: res.body.dayofweek,
                                 lng: res.body.lon,
                                 lat: res.body.lat,
+                                location: location,
+                                address: address,
                                 tz: res.body.tz,
                                 sundata: {
-                                    civilRise: res.body.sundata[0].time,
-                                    rise: res.body.sundata[1].time,
-                                    transit: res.body.sundata[2].time,
-                                    set: res.body.sundata[3].time,
-                                    civilSet: res.body.sundata[4].time
+                                    civilRise: iso8601Prefix + res.body.sundata[0].time + iso8601Suffix,
+                                    rise: iso8601Prefix + res.body.sundata[1].time + iso8601Suffix,
+                                    transit: iso8601Prefix + res.body.sundata[2].time + iso8601Suffix,
+                                    set: iso8601Prefix + res.body.sundata[3].time + iso8601Suffix,
+                                    civilSet: iso8601Prefix + res.body.sundata[4].time + iso8601Suffix
                                 },
-                                moondata: {}
+                                moondata: {
+                                    fracillum: res.body.fracillum ? res.body.fracillum : '50%',
+                                    curphase: res.body.curphase ? res.body.curphase : res.body.closestphase.phase
+                                }
                             };
 
                             res.body.moondata.forEach(function(moondatum) {
                                 switch(moondatum.phen) {
                                     case "R":
-                                        response.moondata.rise = moondatum.time;
+                                        response.moondata.rise = iso8601Prefix + moondatum.time + iso8601Suffix;
                                         break;
                                     case "U":
-                                        response.moondata.transit = moondatum.time;
+                                        response.moondata.transit = iso8601Prefix + moondatum.time + iso8601Suffix;
                                         break;
                                     case "S":
-                                        response.moondata.set = moondatum.time;
+                                        response.moondata.set = iso8601Prefix + moondatum.time + iso8601Suffix;
                                         break;
-                                };
+                                }
                             });
                             context.succeed({
                                 statusCode: 200,
